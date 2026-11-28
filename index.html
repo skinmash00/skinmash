@@ -4246,7 +4246,8 @@ const waResetLink = (ph, nm, g) => {
             { const st0 = await acctStatus(p.phone); if (st0 === "blocked") { window.__acct = "blocked"; logAttempt(p.phone, p.name, "signup"); showAcct("blocked", p); return { ok: false, msg: "" }; } }
             const U = "https://unnexzitkirtqvhmynwh.supabase.co", K = "sb_publishable_ESabG0uyEwunnj3YGYN_og_aghmi7YU";
             try {
-                const r = await fetch(U + "/rest/v1/rpc/register_customer", { method: "POST", headers: { apikey: K, Authorization: "Bearer " + K, "Content-Type": "application/json" },
+                let tk = null; try { tk = window.smSessTok ? await window.smSessTok() : null; } catch (e) {}
+                const r = await fetch(U + "/rest/v1/rpc/register_customer", { method: "POST", headers: { apikey: K, Authorization: "Bearer " + (tk || K), "Content-Type": "application/json" },
                     body: JSON.stringify({ p: { phone: p.phone, name: p.name, whatsapp: p.whatsapp, city: p.city, address: p.address, device: deviceId() } }) });
                 if (r.ok) { try { localStorage.removeItem("sm-deleted-backup"); } catch (e) {} try { pushGender(p.phone, p.gender); } catch (e) {} try { fetch(U + "/rest/v1/rpc/clear_deleted_flag", { method: "POST", headers: { apikey: K, Authorization: "Bearer " + K, "Content-Type": "application/json" }, body: JSON.stringify({ p_phone: p.phone }) }); } catch (e) {} return { ok: true }; }
                 let j = {}; try { j = await r.json(); } catch (e) {}
@@ -6335,7 +6336,9 @@ fillGov();
     }).catch(function () {});
   };
   window.syncMessages = function () {
-    return smRpc("my_messages", { p_phones: phones() }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rows) {
+    var dv = ""; try { dv = localStorage.getItem("sm-device") || ""; } catch (e) {}
+    var q = { p_phones: phones(), p_device: dv };
+    return (window.smRpcS ? window.smRpcS("my_messages", q) : smRpc("my_messages", q)).then(function (r) { return r.ok ? r.json() : null; }).then(function (rows) {
       if (!Array.isArray(rows)) return;
       window.__msgsLive = true;
       var had = LS.getItem("sm-msgs") !== null, oldMax = getMsgs().reduce(function (a, m) { return Math.max(a, m.id); }, 0);
@@ -6807,7 +6810,7 @@ html[data-cbg="dots"] .cc-glass{background:radial-gradient(rgba(0,0,0,.09) 1.3px
   function ccRpSet(mid) {
     var m = ccFind(mid); if (!m || m.deleted || (m.kind === "sticker" && !m.body)) return;
     var who = m.mine ? (((getProfile() || {}).name) || (en() ? "Customer" : "العميل")) : "SKIN MASH";
-    var t = String(m.body || (m.img ? (en() ? "\ud83d\udcf7 Photo" : "\ud83d\udcf7 صورة") : m.kind === "sticker" ? "\ud83d\udd0a" : ""));
+    var t = String(m.body || (m.img ? (/^data:audio|\.(webm|m4a|mp4|ogg|oga|mp3|aac)(\?|#|$)/i.test(String(m.img||""))?(en() ? "🎤 Voice message" : "🎤 رسالة صوتية"):(en() ? "\ud83d\udcf7 Photo" : "\ud83d\udcf7 صورة")) : m.kind === "sticker" ? "\ud83d\udd0a" : ""));
     if (t.indexOf("\u21a9 ") === 0 && t.indexOf("\n") > 0) t = t.slice(t.indexOf("\n") + 1);
     t = t.replace(/\s+/g, " ").slice(0, 140);
     CC.reply = { who: who, text: t }; ccRpBar();
@@ -7202,7 +7205,7 @@ window.SMSND_FILE=function(){return((window.SM_SET||{}).ringtones||{}).customer|
     document.getElementById("cc-gbar").classList.add("hidden");
     var box = document.getElementById("cc-gl"); box.dataset.k = "";
     box.innerHTML = CC.G.list.length ? CC.G.list.map(function (g) {
-      var l = g.last, txt = l ? ((l.sender ? l.sender + ": " : "") + (l.deleted ? "🚫" : (l.body || (l.img ? "📷" : "")))) : (en() ? "No messages yet" : "لسه مفيش رسايل");
+      var l = g.last, txt = l ? ((l.sender ? l.sender + ": " : "") + (l.deleted ? "🚫" : (l.body || (l.img ? (/^data:audio|\.(webm|m4a|mp4|ogg|oga|mp3|aac)(\?|#|$)/i.test(String(l.img||""))?"🎤":"📷") : "")))) : (en() ? "No messages yet" : "لسه مفيش رسايل");
       return '<button type="button" class="cc-gi" onclick="ccGOpen(\'' + g.id + '\')"><span class="cc-hav">' + USERSVG + '</span><span class="cc-hn"><b>' + escHtml(g.name || (en() ? "Group" : "مجموعة")) + '</b><small>' + escHtml(txt).slice(0, 80) + '</small></span>' + (+g.unread ? '<span class="cc-gu">' + (g.unread > 9 ? "9+" : g.unread) + "</span>" : "") + "</button>";
     }).join("") : '<div class="cc-empty">' + (en() ? "You are not in any group yet." : "مفيش مجموعات لسه.") + "</div>";
   }
