@@ -4283,10 +4283,10 @@ const waResetLink = (ph, nm, g) => {
             const en = isEN();
             if (!await smDelDialog(en)) return;
             try {
-                const r = await smRpc("delete_my_account", { p_phone: p.phone, p_device: deviceId() });
-                if (!r.ok) { let j = {}; try { j = await r.json(); } catch (e) {} if (!(r.status === 404 || j.code === "PGRST202")) throw new Error("rpc"); }
-            } catch (e) { showToast(en ? "Couldn't delete the account now, check your connection and try again" : "تعذّر حذف الحساب دلوقتي، تأكد من الاتصال وحاول تاني"); return; }
-            ["sm-profile", "sm-orders", "sm-favs", "sm-notifs", "sm-unread", "sm-deleted-backup", "sm-reqs"].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+                const r = await (window.smRpcS || smRpc)("delete_my_account", { p_phone: p.phone, p_device: deviceId() });
+                if (!r.ok) { let j = {}; try { j = await r.json(); } catch (e) {} throw new Error(j.message || "rpc"); }
+            } catch (e) { const ny = /not_yours/.test(e && e.message); showToast(ny ? (en ? "This account can't be deleted from this device, contact the store" : "مينفعش نحذف الحساب من الجهاز ده، تواصل مع المتجر") : (en ? "Couldn't delete the account now, check your connection and try again" : "تعذّر حذف الحساب دلوقتي، تأكد من الاتصال وحاول تاني")); return; }
+            ["sm-sess", "sm-profile", "sm-orders", "sm-favs", "sm-notifs", "sm-unread", "sm-deleted-backup", "sm-reqs"].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
             try { delete memStore["sm-profile"]; delete memStore["sm-orders"]; delete memStore["sm-favs"]; } catch (e) {}
             window.__acct = "ok"; profileEdit = false;
             try { updateAvatar(); } catch (e) {} try { if (window.updateDot) updateDot(); } catch (e) {}
